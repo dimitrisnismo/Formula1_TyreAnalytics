@@ -1,45 +1,82 @@
 import pandas as pd
 import numpy as np
 import fastf1
-
+import seaborn as sns
 import matplotlib.pyplot as plt
-import fastf1.plotting
 
+sns.set()
 
-fastf1.Cache.enable_cache("Cache")  # replace with your cache directory
+fastf1.Cache.enable_cache(r"C:\Cachef1")  # replace with your cache directory
 
-# enable some matplotlib patches for plotting timedelta values and load
-# FastF1's default color scheme
-fastf1.plotting.setup_mpl()
+i = 1
+while i <= 50:
+    race = fastf1.get_session(2021, i, "R")
+    laps = race.load_laps(with_telemetry=True)
+    laps = laps.sort_values(by=["Time"]).reset_index(drop=True)
+    laps["followingcar"] = laps["Time"] - laps["Time"].shift(1)
+    laps = laps[
+        (laps["PitOutTime"].isnull())
+        & (laps["TrackStatus"] == "1")
+        & (laps["followingcar"] > pd.Timedelta(1.1, unit="s"))
+        & (laps["Compound"] != "INTERMEDIATE")
+        & (laps["Compound"] != "WET")
+    ][
+        [
+            "LapTime",
+            "LapNumber",
+            "Compound",
+            "TyreLife",
+            "Team",
+            "Driver",
+        ]
+    ]
 
-# load a session and its telemetry data
-quali = fastf1.get_session(2021, "Spanish Grand Prix", "R")
-laps = quali.load_laps(with_telemetry=True)
+    laps = laps.sort_values(
+        by=["Driver", "LapNumber", "TyreLife", "Compound"]
+    ).reset_index(drop=True)
+    laps["tyredelta"] = np.where(
+        (laps["Driver"] == laps["Driver"].shift(1))
+        & (laps["Compound"] == laps["Compound"].shift(1)),
+        pd.to_timedelta(laps["LapTime"] - laps["LapTime"].shift(1)),
+        pd.NaT,
+    )
+    laps = laps.dropna()
+    laps["tyredelta"] = (laps["tyredelta"] / 1000).astype("int")
+    laps["lapinseconds"] = laps["LapTime"] / np.timedelta64(1, "s")
+    Compounds = ["SOFT", "MEDIUM", "HARD"]
 
-laps.pick_driver("VER").get_car_data()
+    df = pd.DataFrame()
+    ##Clean lap Time per Compound
+    for compound in Compounds:
+        df_compound = laps[laps["Compound"] == compound]
+        Q1 = df_compound["lapinseconds"].quantile(0.25)
+        Q3 = df_compound["lapinseconds"].quantile(0.75)
+        IQR = Q3 - Q1
+        df_compound = df_compound[
+            ~(
+                (df_compound["lapinseconds"] < (Q1 - 1.5 * IQR))
+                | (df_compound["lapinseconds"] > (Q3 + 1.5 * IQR))
+            )
+        ]
 
+        df_compound = (
+            df_compound[["lapinseconds", "TyreLife"]]
+            .groupby(["TyreLife"])
+            .mean()
+            .reset_index(drop=False)
+        )
+        df_compound["RollingLapTime"] = (
+            df_compound["lapinseconds"]
+            .rolling(window=5, min_periods=1)
+            .mean()
+            .fillna(df_compound["lapinseconds"])
+        )
+        df_compound["Compound"] = compound
 
-# ver_lap = laps.pick_driver("VER").pick_fastest()
-# ham_lap = laps.pick_driver("HAM").pick_fastest()
+        df = pd.concat([df, df_compound])
 
-# ver_tel = ver_lap.get_car_data().add_distance()
-# ham_tel = ham_lap.get_car_data().add_distance()
-
-# rbr_color = fastf1.plotting.team_color("RBR")
-# mer_color = fastf1.plotting.team_color("MER")
-
-# fig, ax = plt.subplots()
-# ax.plot(ver_tel["Distance"], ver_tel["Speed"], color=rbr_color, label="VER")
-# ax.plot(ham_tel["Distance"], ham_tel["Speed"], color=mer_color, label="HAM")
-
-# ax.set_xlabel("Distance in m")
-# ax.set_ylabel("Speed in km/h")
-
-# ax.legend()
-
-# plt.suptitle(
-#     f"Fastest Lap Comparison \n "
-#     f"{quali.weekend.name} {quali.weekend.year} Qualifying"
-# )
-
-# plt.show()
+    pd.pivot_table(
+        df, values="RollingLapTime", columns="Compound", index="TyreLife"
+    ).plot(title=race.weekend.name)
+    i = i + 1
+# asdasf
