@@ -3,7 +3,8 @@ import numpy as np
 import fastf1
 import seaborn as sns
 import matplotlib.pyplot as plt
-import streamlit as st
+
+# import streamlit as st
 
 sns.set()
 
@@ -178,7 +179,7 @@ def create_race_data():
     data = add_laptime_to_seconds(data)
     data = clean_outlier_lap_times(data)
     data = remove_na_rows(data)
-    data = rolling_lap_times(data)
+    # data = rolling_lap_times(data)
     return data
 
 
