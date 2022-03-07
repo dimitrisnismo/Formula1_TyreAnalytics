@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 
 sns.set()
 
-
+fastf1.Cache.enable_cache("C:\\Cachef1")  # replace with your cache directory
 # List of Teams ['Alpine F1 Team', 'Mercedes', 'AlphaTauri', 'Alfa Romeo',
 #        'Williams', 'Ferrari', 'Haas F1 Team', 'McLaren', 'Red Bull',
 #        'Aston Martin']
@@ -158,6 +158,7 @@ def rolling_lap_times(data):
         .fillna(data["lapinseconds"])
         .rename(columns={"lapinseconds": "Rolling_lap_times"})
     )
+
     data = pd.merge(
         data,
         data_temp[
@@ -167,7 +168,23 @@ def rolling_lap_times(data):
         how="left",
         validate="1:1",
     )
-    return data_temp
+    return data
+
+
+def calculate_set_of_tyres(data):
+    data["setoftyres"] = data.groupby(["Race", "Driver", "Compound"]).cumcount()
+    data["setoftyres"] = np.where(
+        (data["Race"] == data["Race"].shift(1))
+        & (data["Driver"] == data["Driver"].shift(1))
+        & (data["Compound"] == data["Compound"].shift(1))
+        & (data["TyreLife"] > data["TyreLife"].shift(1)),
+        0,
+        1,
+    )
+    data["setoftyres"] = data.groupby(["Race", "Driver"])["setoftyres"].cumsum()
+    data["setoftyres"] = data["setoftyres"].astype("str")
+    data["Compound"] = data["Compound"] + "_" + data["setoftyres"]
+    return data
 
 
 def create_race_data():
@@ -180,6 +197,7 @@ def create_race_data():
     data = clean_outlier_lap_times(data)
     data = remove_na_rows(data)
     # data = rolling_lap_times(data)
+    # data = calculate_set_of_tyres(data)
     return data
 
 
