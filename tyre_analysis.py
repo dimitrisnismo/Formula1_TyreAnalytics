@@ -82,6 +82,7 @@ def filter_dataframe(data):
 
 def add_tyre_time_difference(data):
     # Creating a column with the laptime delta between the laps
+    data = pd.DataFrame(data)
     data = data.sort_values(
         by=["Race", "Driver", "LapNumber", "TyreLife", "Compound"]
     ).reset_index(drop=True)
@@ -89,11 +90,10 @@ def add_tyre_time_difference(data):
         (data["Driver"] == data["Driver"].shift(1))
         & (data["Compound"] == data["Compound"].shift(1))
         & (data["Race"] == data["Race"].shift(1)),
-        pd.to_timedelta(data["LapTime"] - data["LapTime"].shift(1)),
-        pd.NaT,
+        (data["lapinseconds"]) - (data["lapinseconds"].shift(1)),
+        np.nan,
     )
-    data["tyredelta"] = data["tyredelta"].fillna(9999 * 1000)
-    data["tyredelta"] = (data["tyredelta"] / 1000).astype("int")
+    data["tyredelta"] = data["tyredelta"].fillna(9999)
     return data
 
 
@@ -192,13 +192,10 @@ def create_race_data():
     data = remove_wet_races(data)
     data = add_difference_from_the_car_in_front(data)
     data = filter_dataframe(data)
-    data = add_tyre_time_difference(data)
     data = add_laptime_to_seconds(data)
     data = clean_outlier_lap_times(data)
     data = remove_na_rows(data)
+    data = add_tyre_time_difference(data)
     # data = rolling_lap_times(data)
-    # data = calculate_set_of_tyres(data)
+    data = calculate_set_of_tyres(data)
     return data
-
-
-data = create_race_data()
