@@ -6,7 +6,7 @@ import altair as alt
 
 # from tyre_analysis import create_race_data
 
-from tyre_analysis import create_race_data
+# from tyre_analysis import create_race_data
 
 st.set_page_config(
     page_title="Formula 1 Data Analysis",
