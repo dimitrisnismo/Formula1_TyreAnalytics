@@ -133,6 +133,82 @@ c3 = (
 
 
 st.altair_chart(c3, use_container_width=True)
+domain2 = [
+    "HAM",
+    "BOT",
+    "VER",
+    "PER",
+    "NOR",
+    "RIC",
+    "LEC",
+    "SAI",
+    "ALO",
+    "OCO",
+    "RAI",
+    "GIO",
+    "VET",
+    "STR",
+    "GAS",
+    "TSU",
+    "MAZ",
+    "MSC",
+    "LAT",
+    "RUS",
+]
+range_2 = [
+    "#00d2be",
+    "#00d2be",
+    "#0600ef",
+    "#0600ef",
+    "#ff8700",
+    "#ff8700",
+    "#dc0000",
+    "#dc0000",
+    "#0090ff",
+    "#0090ff",
+    "#900000",
+    "#900000",
+    "#006f62",
+    "#006f62",
+    "#2b4562",
+    "#2b4562",
+    "#ffffff",
+    "#ffffff",
+    "#005aff",
+    "#005aff",
+]
+
+# Visualize average tyre difference per Driver
+c7 = (
+    alt.Chart(
+        (
+            data[
+                (data["Race"] == race_choice)
+                # & (data["Driver"] == driver_choice)
+                & (data["tyredelta"] < 9999)
+            ]
+            .groupby(["Driver"])
+            .mean()
+        ).reset_index()
+    )
+    .mark_bar()
+    .encode(
+        alt.X("Driver", scale=alt.Scale(zero=False)),
+        alt.Y("tyredelta"),
+        color=alt.Color("Driver", scale=alt.Scale(domain=domain2, range=range_2)),
+    )
+    .properties(title="Avg laptime Difference per Lap by Driver")
+    .interactive()
+    # .mark_text(
+    #     align="left",
+    #     baseline="middle",
+    #     dx=3,  # Nudges text to right so it doesn't appear on top of the bar
+    # )
+    # .encode(text="tyredelta")
+)
+
+
+st.altair_chart(c7, use_container_width=True)
 
 
 st.subheader("Driver Analysis for Selected Race")
