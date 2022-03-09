@@ -3,6 +3,7 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import altair as alt
+from fastf1.ergast import load
 
 from tyre_analysis import create_race_data
 
@@ -16,8 +17,12 @@ st.set_page_config(
     menu_items=None,
 )
 st.title("Formula 1 Tyre Analysis")
+@st.cache()
+def load_data():
+    data = create_race_data()
+    return data
 
-data = create_race_data()
+data=load_data()
 # data.to_pickle("data.pkl")
 # data = pd.read_pickle("data.pkl")
 

@@ -8,7 +8,8 @@ import matplotlib.pyplot as plt
 
 sns.set()
 
-fastf1.Cache.enable_cache("C:\\Cachef1")  # replace with your cache directory
+fastf1.Cache.enable_cache("C:\\Cachef1") 
+ # replace with your cache directory
 # List of Teams ['Alpine F1 Team', 'Mercedes', 'AlphaTauri', 'Alfa Romeo',
 #        'Williams', 'Ferrari', 'Haas F1 Team', 'McLaren', 'Red Bull',
 #        'Aston Martin']

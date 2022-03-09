@@ -1136,13 +1136,9 @@ class Session:
     def _get_session_date(self):
         """Session date formatted as '%Y-%m-%d' (e.g. '2019-03-12')"""
         if self.weekend.is_testing():
-            if (year := str(self.weekend.year)) == '2020':
-                week_index = int(self.weekend.name[-1]) - 1
-                day_index = int(self.name[-1]) - 1
-                date = TESTING_LOOKUP[year][week_index][day_index]
-            elif year == '2021':
-                day_index = int(self.name[-1]) - 1
-                date = TESTING_LOOKUP[year][0][day_index]
+
+            day_index = int(self.name[-1]) - 1
+            date = TESTING_LOOKUP[2021][0][day_index]
 
         # TODO: remove; temporary patch to support sprint qualifying
         elif ((self.weekend.year == 2021) and
