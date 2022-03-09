@@ -1,6 +1,5 @@
 import pandas as pd
 import numpy as np
-!pip install fastf1
 import fastf1
 import seaborn as sns
 import matplotlib.pyplot as plt
