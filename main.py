@@ -15,15 +15,15 @@ st.set_page_config(
     menu_items=None,
 )
 st.title("Formula 1 Tyre Analysis")
-@st.cache()
+# @st.cache()
 
-def load_data():
-    data = create_race_data()
-    return data
+# def load_data():
+#     data = create_race_data()
+#     return data
 
-data=load_data()
+# data=load_data()
 # data.to_pickle("data.pkl")
-# data = pd.read_pickle("data.pkl")
+data = pd.read_pickle("data.pkl")
 
 Race = data["Race"].unique()
 race_choice = st.sidebar.selectbox("Select Race", Race)
