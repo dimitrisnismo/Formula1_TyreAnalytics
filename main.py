@@ -3,12 +3,13 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import altair as alt
+
 # import pickle5 as pickle
 
 # with open("data.pkl", "rb") as fh:
 #     data = pickle.load(fh)
 # # from tyre_analysis import create_race_data
-
+import io
 
 st.set_page_config(
     page_title="Formula 1 Data Analysis",
@@ -22,11 +23,15 @@ st.title("Formula 1 Tyre Analysis")
 
 # data=load_data()
 # data.to_pickle("data.pkl")
-@st.cache()
+
+
+
 def load_data():
     data = pd.read_pickle("data.pkl")
     return data
 
+
+data = load_data()
 Race = data["Race"].unique()
 race_choice = st.sidebar.selectbox("Select Race", Race)
 Driver = data[data["Race"] == race_choice]["Driver"].unique()
@@ -264,7 +269,7 @@ c7 = (
 
 st.altair_chart(c7, use_container_width=True)
 
-st.subheader(driver_choice + "Tyre Analysis for Selected Race")
+st.subheader(driver_choice + " Tyre Analysis for Selected Race")
 # Base KPIS for driver
 col1, col2, col3 = st.columns(3)
 col1.metric(
@@ -348,3 +353,56 @@ c6 = (
 
 
 st.altair_chart(c6, use_container_width=True)
+
+
+st.subheader(driver_choice + " Tyre Analysis for Total Season")
+# Visualize average tyre difference
+c21 = (
+    alt.Chart(
+        (
+            data[
+                # (data["Race"] == race_choice)
+                (data["Driver"] == driver_choice)
+                & (data["tyredelta"] < 9999)
+            ]
+            .groupby(["Race"])
+            .mean()
+        ).reset_index()
+    )
+    .mark_bar()
+    .encode(
+        alt.X("Race", scale=alt.Scale(zero=False)),
+        alt.Y("tyredelta"),
+        # color=alt.Color("Race", scale=alt.Scale(domain=domain, range=range_)),
+    )
+    .properties(title="Avg LapTime Difference by Race")
+    .interactive()
+)
+
+
+st.altair_chart(c21,use_container_width=True)
+# Visualize average tyre difference
+c22 = (
+    alt.Chart(
+        (
+            data[
+                # (data["Race"] == race_choice)
+                (data["Driver"] == driver_choice)
+                & (data["tyredelta"] < 9999)
+            ]
+            .groupby(["Compound"])
+            .mean()
+        ).reset_index()
+    )
+    .mark_bar()
+    .encode(
+        alt.X("Compound", scale=alt.Scale(zero=False)),
+        alt.Y("tyredelta"),
+        color=alt.Color("Compound", scale=alt.Scale(domain=domain, range=range_)),
+    )
+    .properties(title="Avg LapTime Difference by Compound Total Season")
+    .interactive()
+)
+
+
+st.altair_chart(c22,use_container_width=True)
