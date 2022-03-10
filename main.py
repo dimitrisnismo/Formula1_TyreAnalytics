@@ -3,6 +3,7 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import altair as alt
+
 # from tyre_analysis import create_race_data
 
 
@@ -14,11 +15,7 @@ st.set_page_config(
     menu_items=None,
 )
 st.title("Formula 1 Tyre Analysis")
-# @st.cache()
 
-# def load_data():
-#     data = create_race_data()
-#     return data
 
 # data=load_data()
 # data.to_pickle("data.pkl")
@@ -26,17 +23,16 @@ data = pd.read_pickle("data.pkl")
 
 Race = data["Race"].unique()
 race_choice = st.sidebar.selectbox("Select Race", Race)
-
 Driver = data[data["Race"] == race_choice]["Driver"].unique()
-driver_choice = st.sidebar.selectbox("Select Driver:", Driver)
+driver_choice = st.sidebar.selectbox("Select Driver:", Driver, key=1)
 data["TyreLife"] = data["TyreLife"].astype("int")
+data["Compound_SMH"] = data.Compound.apply(lambda x: pd.Series(str(x).split("_")))[0]
+options = data["Compound_SMH"].unique()
+selected_tyre = st.sidebar.multiselect(
+    "Compound for F1 2021 Season", options, key=3, default=["SOFT", "MEDIUM", "HARD"]
+)
 
-
-# race_choice = "Abu Dhabi Grand Prix"
-# driver_choice = "ALO"
-
-
-# Colors for Tyres
+# Colors for Tyres and Teams
 domain = [
     "SOFT_1",
     "SOFT_2",
@@ -59,83 +55,6 @@ range_ = [
     "#b3b3b3",
     "#858585",
 ]
-
-
-st.subheader("Race Tyre Analysis")
-# Base KPIS for race
-col3, col4, col5 = st.columns(3)
-col3.metric(
-    "Fastest Lap",
-    str(data[(data["Race"] == race_choice)]["lapinseconds"].min()) + " sec",
-)
-col4.metric(
-    "Slowest Lap",
-    str(data[(data["Race"] == race_choice)]["lapinseconds"].max()) + " sec",
-)
-col5.metric(
-    "Avg Tyre Difference",
-    str(
-        round(
-            data[(data["Race"] == race_choice) & (data["tyredelta"] < 9999)][
-                "tyredelta"
-            ].mean(),
-            3,
-        )
-    )
-    + " sec",
-)
-
-# Visualize Race Results
-c1 = (
-    alt.Chart(
-        data[(data["Race"] == race_choice)][["TyreLife", "Compound", "lapinseconds"]]
-        .groupby(["TyreLife", "Compound"])
-        .mean()
-        .reset_index()
-    )
-    .mark_line()
-    .encode(
-        alt.X("TyreLife", scale=alt.Scale(zero=False)),
-        alt.Y("lapinseconds", scale=alt.Scale(zero=False)),
-        color=alt.Color("Compound", scale=alt.Scale(domain=domain, range=range_)),
-    )
-    .properties(title="Selected Race Data ")
-    .interactive()
-)
-
-st.altair_chart(c1, use_container_width=True)
-
-# Visualize average tyre difference
-c3 = (
-    alt.Chart(
-        (
-            data[
-                (data["Race"] == race_choice)
-                # & (data["Driver"] == driver_choice)
-                & (data["tyredelta"] < 9999)
-            ]
-            .groupby(["Compound"])
-            .mean()
-        ).reset_index()
-    )
-    .mark_bar()
-    .encode(
-        alt.X("Compound", scale=alt.Scale(zero=False)),
-        alt.Y("tyredelta"),
-        color=alt.Color("Compound", scale=alt.Scale(domain=domain, range=range_)),
-    )
-    .properties(title="Avg laptime Difference per Lap")
-    .interactive()
-    # .mark_text(
-    #     align="left",
-    #     baseline="middle",
-    #     dx=3,  # Nudges text to right so it doesn't appear on top of the bar
-    # )
-    # .encode(text="tyredelta")
-)
-
-
-st.altair_chart(c3, use_container_width=True)
 domain2 = [
     "HAM",
     "BOT",
@@ -181,15 +100,24 @@ range_2 = [
     "#005aff",
 ]
 
-# Visualize average tyre difference per Driver
+domain3 = [
+    "SOFT",
+    "MEDIUM",
+    "HARD",
+]
+range_3 = [
+    "#ff0000",
+    "#e9ed00",
+    "#ffffff",
+]
+# Dataframe for total data
+
+
+st.subheader("F1 2021 Season")
 c7 = (
     alt.Chart(
         (
-            data[
-                (data["Race"] == race_choice)
-                # & (data["Driver"] == driver_choice)
-                & (data["tyredelta"] < 9999)
-            ]
+            data[(data["tyredelta"] < 9999) & data["Compound_SMH"].isin(selected_tyre)]
             .groupby(["Driver"])
             .mean()
         ).reset_index()
@@ -200,21 +128,139 @@ c7 = (
         alt.Y("tyredelta"),
         color=alt.Color("Driver", scale=alt.Scale(domain=domain2, range=range_2)),
     )
-    .properties(title="Avg laptime Difference per Lap by Driver")
+    .properties(title="Avg LapTime Difference in seconds by Driver")
     .interactive()
-    # .mark_text(
-    #     align="left",
-    #     baseline="middle",
-    #     dx=3,  # Nudges text to right so it doesn't appear on top of the bar
-    # )
-    # .encode(text="tyredelta")
+)
+
+
+st.altair_chart(c7, use_container_width=True)
+c3 = (
+    alt.Chart(
+        (
+            data[(data["tyredelta"] < 9999) & data["Compound_SMH"].isin(selected_tyre)]
+            .groupby(["Race"])
+            .mean()
+        ).reset_index()
+    )
+    .mark_bar()
+    .encode(
+        alt.X("Race", scale=alt.Scale(zero=False)),
+        alt.Y("tyredelta"),
+    )
+    .properties(title="Avg LapTime Difference in seconds by Race")
+    .interactive()
+)
+st.altair_chart(c3, use_container_width=True)
+
+c14 = (
+    alt.Chart(
+        (
+            data[(data["tyredelta"] < 9999)]
+            .groupby(["Compound_SMH"])
+            .mean()
+        ).reset_index()
+    )
+    .mark_bar()
+    .encode(
+        alt.X("Compound_SMH", scale=alt.Scale(zero=False)),
+        alt.Y("tyredelta"),
+        color=alt.Color("Compound_SMH", scale=alt.Scale(domain=domain3, range=range_3)),
+    )
+    .properties(title="Avg LapTime Difference in seconds by Compound")
+    .interactive()
+)
+st.altair_chart(c14, use_container_width=True)
+
+
+st.subheader(race_choice + " Race Tyre Analysis")
+
+# Base KPIS for race
+col3, col4, col5 = st.columns(3)
+col3.metric(
+    "Fastest Lap",
+    str(data[(data["Race"] == race_choice)]["lapinseconds"].min()) + " sec",
+)
+col4.metric(
+    "Slowest Lap",
+    str(data[(data["Race"] == race_choice)]["lapinseconds"].max()) + " sec",
+)
+col5.metric(
+    "Avg Tyre Difference",
+    str(
+        round(
+            data[(data["Race"] == race_choice) & (data["tyredelta"] < 9999)][
+                "tyredelta"
+            ].mean(),
+            3,
+        )
+    )
+    + " sec",
+)
+
+# Visualize Race Results
+c1 = (
+    alt.Chart(
+        data[(data["Race"] == race_choice)][["TyreLife", "Compound", "lapinseconds"]]
+        .groupby(["TyreLife", "Compound"])
+        .mean()
+        .reset_index()
+    )
+    .mark_line()
+    .encode(
+        alt.X("TyreLife", scale=alt.Scale(zero=False)),
+        alt.Y("lapinseconds", scale=alt.Scale(zero=False)),
+        color=alt.Color("Compound", scale=alt.Scale(domain=domain, range=range_)),
+    )
+    .properties(title="Avg LapTime in seconds by Compound ")
+    .interactive()
+)
+
+st.altair_chart(c1, use_container_width=True)
+
+# Visualize average tyre difference
+c11 = (
+    alt.Chart(
+        (
+            data[(data["Race"] == race_choice) & (data["tyredelta"] < 9999)]
+            .groupby(["Compound"])
+            .mean()
+        ).reset_index()
+    )
+    .mark_bar()
+    .encode(
+        alt.X("Compound", scale=alt.Scale(zero=False)),
+        alt.Y("tyredelta"),
+        color=alt.Color("Compound", scale=alt.Scale(domain=domain, range=range_)),
+    )
+    .properties(title="Avg LapTime Difference in seconds by Compound")
+    .interactive()
+)
+st.altair_chart(c11, use_container_width=True)
+
+
+# Visualize average tyre difference per Driver
+c7 = (
+    alt.Chart(
+        (
+            data[(data["Race"] == race_choice) & (data["tyredelta"] < 9999)]
+            .groupby(["Driver"])
+            .mean()
+        ).reset_index()
+    )
+    .mark_bar()
+    .encode(
+        alt.X("Driver", scale=alt.Scale(zero=False)),
+        alt.Y("tyredelta"),
+        color=alt.Color("Driver", scale=alt.Scale(domain=domain2, range=range_2)),
+    )
+    .properties(title="Avg LapTime Difference in seconds by Driver")
+    .interactive()
 )
 
 
 st.altair_chart(c7, use_container_width=True)
 
-
-st.subheader("Driver Analysis for Selected Race")
+st.subheader(driver_choice + "Tyre Analysis for Selected Race")
 # Base KPIS for driver
 col1, col2, col3 = st.columns(3)
 col1.metric(
@@ -267,7 +313,7 @@ c2 = (
         alt.Y("lapinseconds", scale=alt.Scale(zero=False)),
         color=alt.Color("Compound", scale=alt.Scale(domain=domain, range=range_)),
     )
-    .properties(title="Selected Driver and Race Data ")
+    .properties(title="LapTimes ")
     .interactive()
 )
 st.altair_chart(c2, use_container_width=True)
@@ -292,14 +338,8 @@ c6 = (
         alt.Y("tyredelta"),
         color=alt.Color("Compound", scale=alt.Scale(domain=domain, range=range_)),
     )
-    .properties(title="Avg laptime Difference per Lap")
+    .properties(title="Avg LapTime Difference by Compound")
     .interactive()
-    # .mark_text(
-    #     align="left",
-    #     baseline="middle",
-    #     dx=3,  # Nudges text to right so it doesn't appear on top of the bar
-    # )
-    # .encode(text="tyredelta")
 )
 
 
