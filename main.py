@@ -22,7 +22,10 @@ st.title("Formula 1 Tyre Analysis")
 
 # data=load_data()
 # data.to_pickle("data.pkl")
-data = pd.read_pickle("data.pkl")
+@st.cache()
+def load_data():
+    data = pd.read_pickle("data.pkl")
+    return data
 
 Race = data["Race"].unique()
 race_choice = st.sidebar.selectbox("Select Race", Race)
