@@ -4,6 +4,7 @@ Data:
 The data in this page have been retrieved from fastf1 python package. 
 Races where containing at least one tyre or intermediate compound have 
 been excluded.
+
 Laps where the car in front is less than 1.1 seconds have been 
 excluded.
 Laps before and after pit stop have been exluded.
