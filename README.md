@@ -20,5 +20,5 @@ Data fields Description:
 lapinseconds= Lap Times in seconds. 
 tyredelta= difference lap by lap for lapinseconds
 
-![alt text](https://github.com/dimitrisnismo/Formula1_TyreAnalytics/blob/main/screenshot.png?raw=true)
+![alt text](https://github.com/dimitrisnismo/Formula1_TyreAnalytics/blob/main/Images/screenshot.png?raw=true)
 
