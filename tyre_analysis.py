@@ -4,12 +4,8 @@ import fastf1
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-# import streamlit as st
-
-sns.set()
-
-fastf1.Cache.enable_cache("C:\\Cachef1") 
- # replace with your cache directory
+fastf1.Cache.enable_cache("C:\\Cachef1")
+# replace with your cache directory
 # List of Teams ['Alpine F1 Team', 'Mercedes', 'AlphaTauri', 'Alfa Romeo',
 #        'Williams', 'Ferrari', 'Haas F1 Team', 'McLaren', 'Red Bull',
 #        'Aston Martin']
@@ -37,10 +33,11 @@ def remove_wet_races(data):
         .count()
         .reset_index()
     )
-    wet_races = pd.pivot_table(
-        wet_races, index="Race", columns="Compound", values="Driver"
-    ).reset_index()
-    wet_races = wet_races.fillna(0)
+    wet_races = (
+        pd.pivot_table(wet_races, index="Race", columns="Compound", values="Driver")
+        .reset_index()
+        .fillna(0)
+    )
     wet_races = wet_races[(wet_races["WET"] == 0) & (wet_races["INTERMEDIATE"] == 0)]
     data = pd.merge(data, wet_races[["Race"]], on="Race")
     data = data[data["Compound"] != "UNKNOWN"]
@@ -51,12 +48,14 @@ def add_difference_from_the_car_in_front(data):
     # Sort Values by Following Car
     data = data.sort_values(by=["Race", "Time"]).reset_index(drop=True)
     ##Add column with the delta between 2 cars in the beginning of the lap
-    data["followingcar"] = data["Time"] - data["Time"].shift(1)
+    data["followingcar"] = np.where(
+        data["Race"] == data["Race"].shift(1), data["Time"] - data["Time"].shift(1), 2
+    )
     return data
 
 
 def filter_dataframe(data):
-    # Filter Dataframe where
+    # Filter Dataframe where:
     # 1.there is no pit in or pit out in this lap
     # 2.The track is Clear
     # 3.there is no car ahead less than 1 second
